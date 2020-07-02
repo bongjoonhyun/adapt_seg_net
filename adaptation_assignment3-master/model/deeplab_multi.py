@@ -1,8 +1,8 @@
-import torch.nn as nn
 import math
-import torch.utils.model_zoo as model_zoo
-import torch
 import numpy as np
+import torch
+import torch.nn as nn
+import torch.utils.model_zoo as model_zoo
 
 affine_par = True
 
@@ -58,13 +58,15 @@ class Bottleneck(nn.Module):
 
     def __init__(self, inplanes, planes, stride=1, dilation=1, downsample=None):
         super(Bottleneck, self).__init__()
-        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, stride=stride, bias=False)  # change
+        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, stride=stride,
+                               bias=False)  # change
         self.bn1 = nn.BatchNorm2d(planes, affine=affine_par)
         for i in self.bn1.parameters():
             i.requires_grad = False
 
         padding = dilation
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1,  # change
+        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1,
+                               # change
                                padding=padding, bias=False, dilation=dilation)
         self.bn2 = nn.BatchNorm2d(planes, affine=affine_par)
         for i in self.bn2.parameters():
@@ -99,16 +101,27 @@ class Bottleneck(nn.Module):
 
         return out
 
-""" 
-Implement the ASPP module
-
+# TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
 class ASPP_Module(nn.Module):
-    def __init__():
-        pass
-    def forward(self, x):
-        pass
-"""
+    def __init__(self, inplanes, dilation_series, padding_series, num_classes):
+        super(Classifier_Module, self).__init__()
+        self.num_classes = num_classes
 
+        self.conv2d_list = nn.ModuleList()
+        for dilation, padding in zip(dilation_series, padding_series):
+            conv2d = nn.Conv2d(inplanes, num_classes, kernel_size=3, stride=1,
+                               padding=padding, dilation=dilation, bias=True)
+            self.conv2d_list.append(conv2d)
+
+        for conv2d in self.conv2d_list:
+            conv2d.weight.data.normal_(0.0, 0.01)
+
+    def forward(self, x):
+        out = torch.zeros(x.shape)
+        for i in range(len(self.conv2d_list)):
+            out += self.conv2d_list[i](x)
+        return out
+#
 
 class ResNetMulti(nn.Module):
     def __init__(self, block, layers, num_classes):
@@ -120,18 +133,21 @@ class ResNetMulti(nn.Module):
         for i in self.bn1.parameters():
             i.requires_grad = False
         self.relu = nn.ReLU(inplace=True)
-        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1, ceil_mode=True)  # change
+        self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1,
+                                    ceil_mode=True)  # change
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, layers[2], stride=1, dilation=2)
-        self.layer4 = self._make_layer(block, 512, layers[3], stride=1, dilation=4)
-        
-        """
-        Initialize the two aspp modules
-        
-        self.layer5 = 
-        self.layer6 = 
-        """
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=1,
+                                       dilation=2)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=1,
+                                       dilation=4)
+
+        # TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+        self.layer5 = ASPP_Module(1024, [6, 12, 18, 24], [6, 12, 18, 24],
+                                  num_classes)
+        self.layer6 = ASPP_Module(2048, [6, 12, 18, 24], [6, 12, 18, 24],
+                                  num_classes)
+        #
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -153,20 +169,31 @@ class ResNetMulti(nn.Module):
         for i in downsample._modules['1'].parameters():
             i.requires_grad = False
         layers = []
-        layers.append(block(self.inplanes, planes, stride, dilation=dilation, downsample=downsample))
+        layers.append(block(self.inplanes, planes, stride, dilation=dilation,
+                            downsample=downsample))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, dilation=dilation))
 
         return nn.Sequential(*layers)
 
-    """ 
-    Implement the forward function of Deeplab
-    Note that multi-level adaptation uses the feature after the layer3 additionally.
-    
+    # TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
     def forward(self, x):
-        pass
-    """
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+
+        x1 = self.layer5(x)
+
+        x = self.layer4(x)
+        x2 = self.layer6(x)
+
+        return x1, x2
+    #
 
     def get_1x_lr_params_NOscale(self):
         """
@@ -206,11 +233,12 @@ class ResNetMulti(nn.Module):
                 yield i
 
     def optim_parameters(self, args):
-        return [{'params': self.get_1x_lr_params_NOscale(), 'lr': args.learning_rate},
-                {'params': self.get_10x_lr_params(), 'lr': 10 * args.learning_rate}]
+        return [{'params': self.get_1x_lr_params_NOscale(),
+                 'lr': args.learning_rate},
+                {'params': self.get_10x_lr_params(),
+                 'lr': 10 * args.learning_rate}]
 
 
 def DeeplabMulti(num_classes=21):
     model = ResNetMulti(Bottleneck, [3, 4, 23, 3], num_classes)
     return model
-
