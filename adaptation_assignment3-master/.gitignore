@@ -1,3 +1,6 @@
+data/
+snapshots/
+
 *.pyc
 *.pth
 *.png

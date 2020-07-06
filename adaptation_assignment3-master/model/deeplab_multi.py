@@ -104,7 +104,7 @@ class Bottleneck(nn.Module):
 # Implemented by Bongjoon Hyun
 class ASPP_Module(nn.Module):
     def __init__(self, inplanes, dilation_series, padding_series, num_classes):
-        super(Classifier_Module, self).__init__()
+        super(ASPP_Module, self).__init__()
         self.num_classes = num_classes
 
         self.conv2d_list = nn.ModuleList()
@@ -117,7 +117,8 @@ class ASPP_Module(nn.Module):
             conv2d.weight.data.normal_(0.0, 0.01)
 
     def forward(self, x):
-        out = torch.zeros(x.shape)
+        N, _, H, W = x.shape
+        out = torch.zeros([N, self.num_classes, H, W]).cuda()
         for i in range(len(self.conv2d_list)):
             out += self.conv2d_list[i](x)
         return out

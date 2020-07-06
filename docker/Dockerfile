@@ -29,12 +29,14 @@ ENV CONDA_PREFIX=/root/anaconda3/envs/$CONDA_DEFAULT_ENV
 ENV PATH=$CONDA_PREFIX/bin:$PATH
 ENV CONDA_AUTO_UPDATE_CONDA=false
 
+# Install PyTorch
+RUN conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
+
 RUN pip install --upgrade pip
 
 RUN pip install opencv-python
 RUN pip install numpy
-
-# Install PyTorch
-RUN conda install pytorch torchvision cudatoolkit=10.2 -c pytorch
+RUN pip install matplotlib
+RUN pip install scipy
 
 WORKDIR /adapt_seg_net

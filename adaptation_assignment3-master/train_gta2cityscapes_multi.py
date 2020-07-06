@@ -304,7 +304,7 @@ def main():
 
             # train with source
 
-            _, batch = trainloader_iter.next()
+            _, batch = next(trainloader_iter)
             images, labels, _, _ = batch
             images = Variable(images).cuda(args.gpu)
 
@@ -318,10 +318,10 @@ def main():
 
             loss = loss / args.iter_size
             loss.backward()
-            loss_seg_value1 += loss_seg1.data.cpu().numpy()[0] / args.iter_size
-            loss_seg_value2 += loss_seg2.data.cpu().numpy()[0] / args.iter_size
+            loss_seg_value1 += loss_seg1.data.cpu().numpy() / args.iter_size
+            loss_seg_value2 += loss_seg2.data.cpu().numpy() / args.iter_size
 
-            _, batch = targetloader_iter.next()
+            _, batch = next(targetloader_iter)
             images, _, _ = batch
             images = Variable(images).cuda(args.gpu)
 
@@ -346,10 +346,8 @@ def main():
 
             loss.backward()
 
-            loss_adv_target_value1 += loss_adv_target1.data.cpu().numpy()[
-                                          0] / args.iter_size
-            loss_adv_target_value2 += loss_adv_target2.data.cpu().numpy()[
-                                          0] / args.iter_size
+            loss_adv_target_value1 += loss_adv_target1.data.cpu().numpy() / args.iter_size
+            loss_adv_target_value2 += loss_adv_target2.data.cpu().numpy() / args.iter_size
 
             for param in model_D1.parameters():
                 param.requires_grad = True
@@ -363,7 +361,12 @@ def main():
             D_out1 = model_D1(F.softmax(pred1))
             D_out2 = model_D2(F.softmax(pred2))
 
-            loss_D1 = bce_loss(D_out1, labels_source2)
+            labels_source1 = Variable(torch.FloatTensor(
+                D_out1.data.size()).fill_(source_label)).cuda(args.gpu)
+            labels_source2 = Variable(torch.FloatTensor(
+                D_out2.data.size()).fill_(source_label)).cuda(args.gpu)
+
+            loss_D1 = bce_loss(D_out1, labels_source1)
             loss_D2 = bce_loss(D_out2, labels_source2)
 
             loss_D1 = loss_D1 / args.iter_size / 2
@@ -372,8 +375,8 @@ def main():
             loss_D1.backward()
             loss_D2.backward()
 
-            loss_D_value1 += loss_D1.data.cpu().numpy()[0]
-            loss_D_value2 += loss_D2.data.cpu().numpy()[0]
+            loss_D_value1 += loss_D1.data.cpu().numpy()
+            loss_D_value2 += loss_D2.data.cpu().numpy()
 
             pred_target1 = pred_target1.detach()
             pred_target2 = pred_target2.detach()
@@ -387,7 +390,6 @@ def main():
                 D_out2.data.size()).fill_(target_label)).cuda(args.gpu)
 
             loss_D1 = bce_loss(D_out1, labels_target1)
-
             loss_D2 = bce_loss(D_out2, labels_target2)
 
             loss_D1 = loss_D1 / args.iter_size / 2
@@ -396,8 +398,8 @@ def main():
             loss_D1.backward()
             loss_D2.backward()
 
-            loss_D_value1 += loss_D1.data.cpu().numpy()[0]
-            loss_D_value2 += loss_D2.data.cpu().numpy()[0]
+            loss_D_value1 += loss_D1.data.cpu().numpy()
+            loss_D_value2 += loss_D2.data.cpu().numpy()
             #
 
         optimizer.step()
