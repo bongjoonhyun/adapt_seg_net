@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-# TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+# Implemented by Bongjoon Hyun
 class FCDiscriminator(nn.Module):
 
     def __init__(self, num_classes, ndf=64):

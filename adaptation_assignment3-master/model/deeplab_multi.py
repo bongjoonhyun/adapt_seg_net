@@ -101,7 +101,7 @@ class Bottleneck(nn.Module):
 
         return out
 
-# TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+# Implemented by Bongjoon Hyun
 class ASPP_Module(nn.Module):
     def __init__(self, inplanes, dilation_series, padding_series, num_classes):
         super(Classifier_Module, self).__init__()
@@ -142,7 +142,7 @@ class ResNetMulti(nn.Module):
         self.layer4 = self._make_layer(block, 512, layers[3], stride=1,
                                        dilation=4)
 
-        # TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+        # Implemented by Bongjoon Hyun
         self.layer5 = ASPP_Module(1024, [6, 12, 18, 24], [6, 12, 18, 24],
                                   num_classes)
         self.layer6 = ASPP_Module(2048, [6, 12, 18, 24], [6, 12, 18, 24],
@@ -177,7 +177,7 @@ class ResNetMulti(nn.Module):
 
         return nn.Sequential(*layers)
 
-    # TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+    # Implemented by Bongjoon Hyun
     def forward(self, x):
         x = self.conv1(x)
         x = self.bn1(x)

@@ -236,7 +236,7 @@ def main():
 
     targetloader_iter = enumerate(targetloader)
 
-    # TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+    # Implemented by Bongjoon Hyun
     model_D1 = FCDiscriminator(num_classes=args.num_classes)
     model_D2 = FCDiscriminator(num_classes=args.num_classes)
 
@@ -247,7 +247,7 @@ def main():
     model_D2.cuda(args.gpu)
     #
 
-    # TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+    # Implemented by Bongjoon Hyun
     optimizer = optim.SGD(model.optim_parameters(args),
                           lr=args.learning_rate, momentum=args.momentum,
                           weight_decay=args.weight_decay)
@@ -265,7 +265,7 @@ def main():
     if args.gan == 'Vanilla':
         bce_loss = torch.nn.BCEWithLogitsLoss()
     elif args.gan == 'LS':
-        # TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+        # Implemented by Bongjoon Hyun
         bce_loss = torch.nn.MSELoss()
         #
 
@@ -295,7 +295,7 @@ def main():
         adjust_learning_rate_D(optimizer_D2, i_iter)
 
         for sub_i in range(args.iter_size):
-            # TODO(bongjoon.hyun@gmail.com): implemented by bongjoon
+            # Implemented by Bongjoon Hyun
             for param in model_D1.parameters():
                 param.requires_grad = False
 
